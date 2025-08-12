@@ -60,3 +60,25 @@ html, body, #map {
   text-align: center;
   line-height: 40px;
 }
+
+/* Make zoom control and layer switcher the same size */
+#map .leaflet-control-zoom a,
+#map .leaflet-control-layers-toggle {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+}
+
+/* Touch mode (Leaflet adds .leaflet-touch on the map element) */
+#map.leaflet-touch .leaflet-control-zoom a,
+#map.leaflet-touch .leaflet-control-layers-toggle {
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+}
+
+/* Ensure the layers toggle icon scales nicely within the square */
+#map .leaflet-control-layers-toggle {
+  background-size: 18px 18px;
+  background-position: center center;
+}

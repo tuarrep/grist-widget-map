@@ -9,7 +9,7 @@ let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
 let mapSource = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
-let mapCopyright = 'ap data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="https://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)';
+let mapCopyright = 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="https://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)';
 
 const Name = "Name";
 const Longitude = "Longitude";
@@ -58,7 +58,7 @@ function getInfo(rec) {
 }
 
 // Function to clear last added markers. Used to clear the map when new record is selected.
-let clearMakers = () => {
+let clearMarkers = () => {
 };
 
 let markers = [];
@@ -90,7 +90,7 @@ function getMarkerIcon({tentAccessible, difficulty, oneNight} = {tentAccessible:
         popupAnchor: [1, -34],
         shadowSize: [28, 28],
         shadowAnchor: [0, 54],
-        shadowPane: 'shadow-pane'
+        shadowPane: 'shadows'
     });
 }
 
@@ -108,6 +108,12 @@ function updateMap(data) {
     }
 
     const tiles = L.tileLayer(mapSource, {attribution: mapCopyright});
+    const osmStd = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    });
+    const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    });
 
     const error = document.querySelector('.error');
     if (error) {
@@ -124,7 +130,8 @@ function updateMap(data) {
     }
     const map = L.map('map', {
         layers: [tiles],
-        wheelPxPerZoomLevel: 90
+        wheelPxPerZoomLevel: 90,
+        zoomControl: false
     });
 
     map.createPane('shadows').style.zIndex = 630;
@@ -146,7 +153,7 @@ function updateMap(data) {
 
     markers.on('click', (e) => {
         const id = e.layer.options.id;
-        selectMaker(id);
+        selectMarker(id);
     });
 
     for (const rec of data) {
@@ -179,7 +186,19 @@ function updateMap(data) {
     }
     map.addLayer(markers);
 
-    clearMakers = () => map.removeLayer(markers);
+    // Add zoom control (explicitly) and layers control (base layers + overlays)
+    L.control.zoom({ position: 'topright' }).addTo(map);
+    const baseLayers = {
+        'Topo': tiles,
+        'OpenStreetMap': osmStd,
+        'Satellite': esriSat,
+    };
+    const overlays = {
+        'Markers': markers,
+    };
+    L.control.layers(baseLayers, overlays, { collapsed: true, position: 'topright' }).addTo(map);
+
+    clearMarkers = () => map.removeLayer(markers);
 
     try {
         map.fitBounds(new L.LatLngBounds(points), {maxZoom: 15, padding: [0, 0]});
@@ -204,11 +223,11 @@ function updateMap(data) {
     makeSureSelectedMarkerIsShown();
 }
 
-function selectMaker(id) {
+function selectMarker(id) {
     // Reset the options from the previously selected marker.
     const previouslyClicked = popups[selectedRowId];
     if (previouslyClicked) {
-        previouslyClicked.pane = 'otherMarkers';
+        previouslyClicked.options.pane = 'otherMarkers';
     }
     const marker = popups[id];
     if (!marker) {
@@ -217,7 +236,7 @@ function selectMaker(id) {
 
     // Remember the new selected marker.
     selectedRowId = id;
-    previouslyClicked.pane = 'selectedMarker';
+    marker.options.pane = 'selectedMarker';
 
     // Rerender markers in this cluster
     markers.refreshClusters();
@@ -258,7 +277,7 @@ grist.onRecord((record) => {
         lastRecord = grist.mapColumnNames(record) || record;
         selectOnMap(lastRecord);
     } else {
-        const marker = selectMaker(record.id);
+        const marker = selectMarker(record.id);
         if (!marker) {
             return;
         }
@@ -280,8 +299,8 @@ grist.onRecords((data) => {
 });
 
 grist.onNewRecord(() => {
-    clearMakers();
-    clearMakers = () => {
+    clearMarkers();
+    clearMarkers = () => {
     };
 })
 
