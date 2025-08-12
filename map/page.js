@@ -2,6 +2,8 @@
 
 /* global grist, window */
 
+let token = "";
+let baseUrl = "";
 let amap;
 let popups = {};
 let selectedTableId = null;
@@ -17,6 +19,7 @@ const Latitude = "Latitude";
 const TentAccessible = "TentAccessible";
 const Difficulty = "Difficulty";
 const OneNight = "OneNight";
+const Picture = "Picture";
 
 let lastRecord;
 let lastRecords;
@@ -54,6 +57,7 @@ function getInfo(rec) {
         tentAccessible: parseValue(rec[TentAccessible]),
         difficulty: parseValue(rec[Difficulty]),
         oneNight: parseValue(rec[OneNight]),
+        pictureUrl: getAttachmentUrl(parseValue(rec[Picture]?.[0])),
     };
 }
 
@@ -94,7 +98,9 @@ function getMarkerIcon({tentAccessible, difficulty, oneNight} = {tentAccessible:
     });
 }
 
-function updateMap(data) {
+async function updateMap(data) {
+    ({token, baseUrl} = await grist.docApi.getAccessToken({ readOnly: true }));
+
     data = data || selectedRecords;
     selectedRecords = data;
     if (!data || data.length === 0) {
@@ -157,7 +163,8 @@ function updateMap(data) {
     });
 
     for (const rec of data) {
-        const {id, name, lng, lat} = getInfo(rec);
+        const info = getInfo(rec);
+        const {id, name, lng, lat} = info;
         // If the record is in the middle of geocoding, skip it.
         if (String(lng) === '...') {
             continue;
@@ -169,7 +176,7 @@ function updateMap(data) {
         const pt = new L.LatLng(lat, lng);
         points.push(pt);
 
-        const icon = getMarkerIcon(getInfo(rec));
+        const icon = getMarkerIcon(info);
 
         const marker = L.marker(pt, {
             title: name,
@@ -179,7 +186,16 @@ function updateMap(data) {
             shadowPane: 'shadows',
         });
 
-        marker.bindPopup(name);
+        // Warm the browser cache to reduce popup layout changes when opening
+        if (info.pictureUrl) {
+            const _preload = new Image();
+            _preload.decoding = 'async';
+            _preload.loading = 'eager';
+            _preload.src = info.pictureUrl;
+        }
+
+        const popupHtml = createPopupHtml(info, icon);
+        marker.bindPopup(popupHtml);
         markers.addLayer(marker);
 
         popups[id] = marker;
@@ -312,6 +328,36 @@ grist.ready({
         {name: "TentAccessible", type: 'Bool'},
         {name: "Difficulty", type: 'Choice'},
         {name: "OneNight", type: 'Bool'},
+        {name: 'Picture', type: 'Attachments'},
     ],
     allowSelectBy: true,
+    requiredAccess : 'full'
 });
+
+function getAttachmentUrl(attachmentId) {
+    if(!attachmentId || !baseUrl || !token) return null;
+
+    console.log({attachmentId, baseUrl, token})
+        return `${baseUrl}/attachments/${attachmentId}/download?auth=${token}`;
+}
+
+function createPopupHtml(info) {
+    const iconUrl = getMarkerIcon(info).options.iconUrl;
+    // Reserve space to prevent layout shift by specifying intrinsic size
+    const IMG_W = 138;
+    const IMG_H = 78;
+    const src = info.pictureUrl ?? iconUrl;
+    const alt = info.name ?? '';
+    return `
+          <div class="popup-content">
+            <img class="popup-img" src="${src}" alt="${alt}" width="${IMG_W}" height="${IMG_H}" decoding="async" loading="eager">
+            <div class="popup-text">
+              <div class="popup-title">${info.name}</div>
+              <div class="popup-info">
+                <div><span class="label">Durée de marche :</span> ${info.difficulty}</div>
+                <div><span class="label">Travail le lendemain</span> ${info.oneNight ? 'OUI' : 'NON'}</div>
+                <div><span class="label">Tente :</span> ${info.tentAccessible ? 'OUI' : 'NON'}</div>
+              </div>
+            </div>
+          </div>`;
+}

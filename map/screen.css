@@ -82,3 +82,39 @@ html, body, #map {
   background-size: 18px 18px;
   background-position: center center;
 }
+
+/* Popup redesign */
+.leaflet-popup-content .popup-content {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.leaflet-popup-content .popup-img {
+  width: 138px;
+  height: 78px;
+  object-fit: cover;
+  flex: 0 0 138px;
+}
+.leaflet-popup-content .popup-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.leaflet-popup-content .popup-title {
+  font-weight: 700;
+  font-size: 14px;
+  margin: 0 0 2px 0;
+}
+.leaflet-popup-content .popup-info {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.leaflet-popup-content .popup-info .label {
+  font-weight: 700;
+}
+
+/* Force Leaflet popup container width */
+#map .leaflet-popup-content {
+  width: 300px !important;
+}
