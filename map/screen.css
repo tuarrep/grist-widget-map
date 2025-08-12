@@ -1,5 +1,5 @@
 #map {
-  width: 100vw; 
+  width: 100vw;
   height: 100vh;
 }
 
@@ -52,7 +52,11 @@ html, body, #map {
   display: inline-block;
 }
 
-/* JV: Needed to highlight selected cluster */
-.marker-cluster-selected {
-  border: 3px solid #16b378;
+.custom-cluster {
+  background-image: url('markers/marker_cluster.png');
+  background-size: contain;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 40px;
 }

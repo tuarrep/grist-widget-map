@@ -21,34 +21,13 @@ const OneNight = "OneNight";
 let lastRecord;
 let lastRecords;
 
-const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
+const selectedRowClusterIconFactory = function () {
     return function (cluster) {
         const childCount = cluster.getChildCount();
 
-        let isSelected = false;
-        try {
-            const selectedMarker = selectedMarkerGetter();
-            isSelected = cluster.getAllChildMarkers().filter((m) => m === selectedMarker).length > 0;
-        } catch (e) {
-            console.error("WARNING: Error in clusterIconFactory in map widget");
-            console.error(e);
-        }
-
-        let c = ' marker-cluster-';
-        if (childCount < 10) {
-            c += 'small';
-        } else if (childCount < 100) {
-            c += 'medium';
-        } else {
-            c += 'large';
-        }
-
         return new L.DivIcon({
-            html: '<div><span>'
-                + childCount
-                + ' <span aria-label="markers"></span>'
-                + '</span></div>',
-            className: 'marker-cluster' + c + (isSelected ? ' marker-cluster-selected' : ''),
+            html: `<div>${childCount}</div>`,
+            className: "custom-cluster",
             iconSize: new L.Point(40, 40)
         });
     }
@@ -159,7 +138,7 @@ function updateMap(data) {
 
     markers = L.markerClusterGroup({
         disableClusteringAtZoom: 15,
-        maxClusterRadius: 80,
+        maxClusterRadius: 40,
         showCoverageOnHover: true,
         clusterPane: 'clusters',
         iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId]),
