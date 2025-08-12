@@ -341,11 +341,27 @@ function getAttachmentUrl(attachmentId) {
         return `${baseUrl}/attachments/${attachmentId}/download?auth=${token}`;
 }
 
+function getGPSUrl({lat, lng}) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+
+    if (isIOS) {
+        // iOS Maps app - use Apple's URL scheme
+        return `http://maps.apple.com/?q=${lat},${lng}&ll=${lat},${lng}`;
+    } else if (isAndroid) {
+        // Android supports geo: URI scheme
+        return `geo:${lat},${lng}`;
+    } else {
+        // Desktop/other - use Google Maps
+        return `https://www.google.com/maps?q=${lat},${lng}`;
+    }
+}
+
 function createPopupHtml(info) {
     const iconUrl = getMarkerIcon(info).options.iconUrl;
     // Reserve space to prevent layout shift by specifying intrinsic size
-    const IMG_W = 138;
-    const IMG_H = 78;
+    const IMG_W = 170;
+    const IMG_H = 96;
     const src = info.pictureUrl ?? iconUrl;
     const alt = info.name ?? '';
     return `
@@ -357,6 +373,7 @@ function createPopupHtml(info) {
                 <div><span class="label">Durée de marche :</span> ${info.difficulty}</div>
                 <div><span class="label">Travail le lendemain</span> ${info.oneNight ? 'OUI' : 'NON'}</div>
                 <div><span class="label">Tente :</span> ${info.tentAccessible ? 'OUI' : 'NON'}</div>
+                <div><span class="label"><a href="${getGPSUrl(info)}" target="_blank">Ouvrir le GPS</a></span></div>
               </div>
             </div>
           </div>`;

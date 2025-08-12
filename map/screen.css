@@ -88,12 +88,13 @@ html, body, #map {
   display: flex;
   gap: 8px;
   align-items: flex-start;
+    justify-content: space-between;
 }
 .leaflet-popup-content .popup-img {
-  width: 138px;
-  height: 78px;
+  width: 170px;
+  height: 96px;
   object-fit: cover;
-  flex: 0 0 138px;
+  flex: 0 0 170px;
 }
 .leaflet-popup-content .popup-text {
   display: flex;
@@ -116,5 +117,5 @@ html, body, #map {
 
 /* Force Leaflet popup container width */
 #map .leaflet-popup-content {
-  width: 300px !important;
+  width: 350px !important;
 }
