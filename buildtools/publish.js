@@ -26,7 +26,7 @@ function isWidgetDir(dir) {
   return fs.existsSync(indexHtmlFile) && fs.existsSync(packageFile);
 }
 
-const ALLOWED = jsonc.parse(fs.readFileSync(path.join(rootDir, 'external.jsonc'), 'utf-8').trim());
+const ALLOWED = {};
 
 // By default remove submodules from the list of folders.
 folders = folders.filter(folder => {
@@ -47,7 +47,7 @@ for (const folder of folders) {
 
   const packageFile = path.join(dir, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageFile));
-  let configs = packageJson.grist; 
+  let configs = packageJson.grist;
   if (!configs) {
     console.warn(`Package in ${folder} is missing grist configuration section.`);
     continue;
