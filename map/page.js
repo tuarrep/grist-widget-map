@@ -20,6 +20,7 @@ const TentAccessible = "TentAccessible";
 const Difficulty = "Difficulty";
 const OneNight = "OneNight";
 const Picture = "Picture";
+const ToValidate = "ToValidate";
 
 let lastRecord;
 let lastRecords;
@@ -58,6 +59,7 @@ function getInfo(rec) {
         difficulty: parseValue(rec[Difficulty]),
         oneNight: parseValue(rec[OneNight]),
         pictureUrl: getAttachmentUrl(parseValue(rec[Picture]?.[0])),
+        toValidate: parseValue(rec[ToValidate])
     };
 }
 
@@ -67,28 +69,36 @@ let clearMarkers = () => {
 
 let markers = [];
 
-function getMarkerIcon({tentAccessible, difficulty, oneNight} = {tentAccessible: false}) {
-    const hospitality = tentAccessible ? 'tent' : 'hammock';
+function getMarkerIcon({tentAccessible, difficulty, oneNight, toValidate} = {tentAccessible: false}) {
+    let iconUrl = 'markers/marker_question.png';
+    let shadowUrl;
 
-    let color = 'green';
-    switch (difficulty) {
-        case '0':
-            color = 'green';
-            break;
-        case '<30mn':
-            color = 'blue';
-            break;
-        case '<1h':
-            color = 'red';
-            break;
-        case '>1h':
-            color = 'black'
-            break;
+    if(!toValidate) {
+        const hospitality = tentAccessible ? 'tent' : 'hammock';
+
+        let color = 'green';
+        switch (difficulty) {
+            case '0':
+                color = 'green';
+                break;
+            case '<30mn':
+                color = 'blue';
+                break;
+            case '<1h':
+                color = 'red';
+                break;
+            case '>1h':
+                color = 'black'
+                break;
+        }
+
+        iconUrl = `markers/marker_${hospitality}_${color}.png`
+        shadowUrl = oneNight ? 'markers/marker_work.png' : undefined
     }
 
     return new L.Icon({
-        iconUrl: `markers/marker_${hospitality}_${color}.png`,
-        shadowUrl: oneNight ? 'markers/marker_work.png' : undefined,
+        iconUrl,
+        shadowUrl,
         iconSize: [42, 42],
         iconAnchor: [21, 42],
         popupAnchor: [1, -34],
@@ -99,7 +109,7 @@ function getMarkerIcon({tentAccessible, difficulty, oneNight} = {tentAccessible:
 }
 
 async function updateMap(data) {
-    ({token, baseUrl} = await grist.docApi.getAccessToken({ readOnly: true }));
+    ({token, baseUrl} = await grist.docApi.getAccessToken({readOnly: true}));
 
     data = data || selectedRecords;
     selectedRecords = data;
@@ -203,7 +213,7 @@ async function updateMap(data) {
     map.addLayer(markers);
 
     // Add zoom control (explicitly) and layers control (base layers + overlays)
-    L.control.zoom({ position: 'topright' }).addTo(map);
+    L.control.zoom({position: 'topright'}).addTo(map);
     const baseLayers = {
         'Topo': tiles,
         'OpenStreetMap': osmStd,
@@ -212,7 +222,7 @@ async function updateMap(data) {
     const overlays = {
         'Markers': markers,
     };
-    L.control.layers(baseLayers, overlays, { collapsed: true, position: 'topright' }).addTo(map);
+    L.control.layers(baseLayers, overlays, {collapsed: true, position: 'topright'}).addTo(map);
 
     clearMarkers = () => map.removeLayer(markers);
 
@@ -329,16 +339,16 @@ grist.ready({
         {name: "Difficulty", type: 'Choice'},
         {name: "OneNight", type: 'Bool'},
         {name: 'Picture', type: 'Attachments'},
+        {name: 'ToValidate', type: 'Bool'},
     ],
     allowSelectBy: true,
-    requiredAccess : 'full'
+    requiredAccess: 'full'
 });
 
 function getAttachmentUrl(attachmentId) {
-    if(!attachmentId || !baseUrl || !token) return null;
+    if (!attachmentId || !baseUrl || !token) return null;
 
-    console.log({attachmentId, baseUrl, token})
-        return `${baseUrl}/attachments/${attachmentId}/download?auth=${token}`;
+    return `${baseUrl}/attachments/${attachmentId}/download?auth=${token}`;
 }
 
 function getGPSUrl({lat, lng}) {
