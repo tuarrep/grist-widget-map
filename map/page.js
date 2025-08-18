@@ -374,10 +374,14 @@ function createPopupHtml(info) {
     const IMG_H = 96;
     const src = info.pictureUrl ?? iconUrl;
     const alt = info.name ?? '';
+    const warningVisibilityClass = info.toValidate ? 'visible' : '';
     return `
           <div class="popup-content">
             <img class="popup-img" src="${src}" alt="${alt}" width="${IMG_W}" height="${IMG_H}" decoding="async" loading="eager">
             <div class="popup-text">
+              <div class="warning-overlay ${warningVisibilityClass}">
+                <div>⚠️<br>Ce point doit être validé !</div>
+              </div>
               <div class="popup-title">${info.name}</div>
               <div class="popup-info">
                 <div><span class="label">Durée de marche :</span> ${info.difficulty}</div>
